@@ -7,4 +7,6 @@ Variables Calculation: It calculates the combined prices for the next 24 hours u
 Then it sorts out the top8 and low8 hours and sets the boolean helpers top_boolean_state and bottom_boolean to on or of state for current hour. The automation then sets the temperature and curve values hourly. In addition to this, there is a bypass possibility in Lovelace to be able to adjust the temp when away from home or if something goes wrong with the automation.
 Ideally, top8 hours should be no heating, low8 should be 20+2 degrees and other 8 hours normal 20C. 
 
+![image](https://github.com/user-attachments/assets/e7f8402b-eeff-43f3-8ddf-50d6e3226a49)
+
 Jacuzzi part is still tbd
