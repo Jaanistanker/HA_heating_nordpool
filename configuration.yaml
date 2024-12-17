@@ -1,0 +1,235 @@
+default_config:                                    
+                                                 
+# DuckDNS & Let's Encrypt                 
+                         
+# Text to speech                                           
+tts:                                               
+                                         
+  - platform: google_translate              
+                                                   
+logger:                                                    
+  default: info                                            
+  logs:                                                    
+    homeassistant.components.python_script: debug          
+                                                   
+python_script:                            
+                                                           
+# Nordpool sensor #                                
+nordpool:                                                  
+                                                           
+# resources:                                
+#  - url: /local/mini-graph-card-bundle.js?v=0.10.0        
+#    type: module                                          
+                                            
+group: !include groups.yaml               
+#automation: !include automations.yaml                     
+automation: !include_dir_merge_list automation/            
+#notify: !include notification.yaml                        
+script: !include scripts.yaml               
+scene: !include scenes.yaml                                
+#sensor: !include_dir_merge_list sensors/                  
+#switch: !include_dir_merge_list switches/  
+#customize: !include customize.yaml                        
+                                                           
+switch:                               
+  - platform: sonoff                                       
+    name: Terrace                                          
+    device_id: 1000d38d4b                                  
+    icon: mdi:lightbulb                                    
+    outlet: 0                                              
+  - platform: sonoff                      
+    name: Christmas                                        
+    device_id: 100102f8d4                                  
+    icon: mdi:lightbulb                                    
+    outlet: 0                                              
+  - platform: sonoff                        
+    name: Rennid                                           
+    device_id: 100090b321                                  
+    icon: mdi:radiator                      
+    outlet: 0                                              
+     
+cover:                                
+   platform: rpi_gpio                                      
+   relay_time: 1                                           
+   state_pull_mode: "UP"            
+   invert_state: true                   
+   invert_relay: true                       
+   covers:                                         
+     - relay_pin: 17                                       
+       state_pin: 4                                        
+       name: "Garage Door"                                 
+       unique_id: "garage_door"                            
+                                               
+sensor:                                   
+  - platform: time_date                                    
+    display_options:                               
+      - 'time'                                             
+      - 'date'                                             
+      - 'date_time'                         
+      - 'time_date'                                        
+      - 'time_utc'                                         
+      - 'beat'                              
+                                          
+template:                                                  
+  - sensor:                                                
+      - name: "Weekday"                                    
+        state: "{{ now().weekday() }}"      
+                                                           
+sonoff:                                                    
+  username:         
+  password:                                       
+  debug: false                                             
+  force_update: [temperature, power]  
+  scan_interval: '00:05:00'  # (optional) default 5 minutes
+  sensors: [temperature, humidity, power, current, voltage]
+                                                           
+mqtt:                                                      
+   broker: localhost                                       
+   username: ******                      
+   password: ******                                    
+                                                           
+binary_sensor:                       
+   - platform: workday                      
+     country: "EE"                          
+     workdays: [mon, tue, wed, thu, fri]                   
+     excludes: [holiday]                                   
+     name: "is Holiday"                     
+                                                           
+input_boolean:                                             
+  nordpool_top8_hours:               
+    name: "Top8 Hours"                  
+    initial: false                          
+  nordpool_bottom8_hours:                                  
+    name: "Low8 Hours"                                     
+    initial: false                          
+  adjust_heating_curve:                                    
+    name: Adjust Heating Curve                             
+    initial: off                      
+  adjust_room_temperature:              
+    name: Adjust Room Temperature           
+    initial: off                                           
+  override_room_temperature:                               
+    name: Override Room Temperature                        
+    initial: off
+input_number:                                      
+  heating_curve_temp:                            
+    name: Heating CurveL                  
+    initial: 30                     
+    min: 0                                                 
+    max: 40                                                
+    step: 1                        
+  room_temperature_setpoint:            
+    name: Room Temperature Setpoint         
+    initial: 20                                    
+    min: 15                                                
+    max: 25                                 
+    step: 1                                                
+                                                           
+sensor:                                        
+  - platform: nordpool                    
+    VAT: True                                              
+    currency: "EUR"                                
+    low_price_cutoff: 0.5                 
+    region: "EE"                                           
+    precision: 6                            
+    price_type: kWh                                        
+                                                           
+#Thermia                                    
+                                          
+# On/Off units                                             
+                                               
+mqtt:                                                      
+  binary_sensor:                            
+    - state_topic: "+/HP/1A01"                             
+      name: "Compressor"                                   
+      payload_on: "1"                       
+      payload_off: "0"                                     
+    - state_topic: "+/HP/1A07"                             
+      name: "Switch valve"            
+      payload_on: "1"          
+      payload_off: "0"                      
+    - state_topic: "+/HP/1A04"                             
+      name: "Brine pump"                                   
+      payload_on: "1"                                      
+      payload_off: "0"                    
+    - state_topic: "+/HP/1A06"                             
+      name: "Radiator pump"                                
+      payload_on: "1"                
+      payload_off: "0"                      
+    - state_topic: "+/HP/1A02"              
+      name: "Add heat step 1"                              
+      payload_on: "1"                                      
+      payload_off: "0"                      
+    - state_topic: "+/HP/1A03"                             
+      name: "Add heat step 2"                              
+      payload_on: "1"                
+      payload_off: "0"                  
+    - state_topic: "+/HP/1A20"              
+      name: "Alarm"                                        
+      payload_on: "1"                                      
+      payload_off: "0"                      
+   
+# Heat pump setting                                        
+  climate:                         
+    - modes:                            
+      current_temperature_topic: "+/HP/0203"
+      temperature_state_topic: "+/HP/0203"         
+      temperature_command_topic: "8cce4efbe88c/HP/SET/0203"
+      min_temp: 13                  
+      max_temp: 26                                         
+      temp_step: .1                                        
+      name: "Room temp setting"                
+      unique_id: set_room_temp            
+    - modes:                                               
+      current_temperature_topic: "+/HP/2204"       
+      temperature_state_topic: "+/HP/2204"
+      temperature_command_topic: "8cce4efbe88c/HP/SET/2204"
+      min_temp: 0                   
+      max_temp: 10                                         
+      temp_step: .1                                        
+      name: "Curve Influence setting"       
+    - modes:                              
+      current_temperature_topic: "+/HP/0205"               
+      temperature_state_topic: "+/HP/0205"     
+      temperature_command_topic: "8cce4efbe88c/HP/SET/0205"
+      min_temp: 20                  
+      max_temp: 50                                         
+      temp_step: .1                                        
+      name: "Curve Left setting"            
+                                                           
+  sensor:                                                  
+    - state_topic: "+/HP/0001"        
+      name: "Radiator_Return"  
+      unit_of_measurement: "C"      
+      icon: mdi:thermometer                                
+      unique_id: thermia.rad_return                        
+    - state_topic: "+/HP/0002"              
+      name: "Radator_Forward"             
+      unit_of_measurement: "C"                             
+      icon: mdi:thermometer                                
+      unique_id: thermia_rad_fwd
+    - state_topic: "+/HP/0005"     
+      name: "Brine In"               
+      unit_of_measurement: "C"                             
+      icon: mdi:thermometer                                
+      unique_id: thermia.brineIN            
+    - state_topic: "+/HP/0006"                             
+      name: "Brine Out"                                    
+      unit_of_measurement: "C"
+      icon: mdi:thermometer             
+      unique_id: thermia.brineOUT   
+    - state_topic: "+/HP/0007"                             
+      name: "Outdoor"                                      
+      unit_of_measurement: "C"              
+      icon: mdi:thermometer                                
+      unique_id: thermia.Outside                           
+    - state_topic: "+/HP/0008"        
+      name: "Indoor"                    
+      unit_of_measurement: "C"      
+      icon: mdi:thermometer                                
+      unique_id: thermia.indoor                            
+    - state_topic: "+/HP/0009"              
+      name: "Warm Water"                  
+      unit_of_measurement: "C"                             
+      icon: mdi:thermometer                                
+      unique_id: thermia.warmwater 
