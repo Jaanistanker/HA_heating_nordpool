@@ -1,0 +1,32 @@
+- id: 'wf4f4f3fvbtgtgtdwwq94hf'
+  alias: Adjust Heating Based on Nordpool & Input Controls
+  trigger:
+    - platform: state
+      entity_id: sensor.nordpool_kwh_ee_eur_6_05_022
+  action:
+    - service: climate.set_temperature
+      data_template:
+        entity_id: climate.room_temp_setting
+        temperature: >
+          {% if is_state('input_boolean.override_room_temperature', 'on') %}
+            {{ states('input_number.room_temperature_setpoint') }}
+          {% elif is_state('input_boolean.adjust_room_temperature', 'on') %}
+            {% if is_state('input_boolean.nordpool_top8_hours', 'on') %}
+              18  # Lower temperature during high price hours
+            {% elif is_state('input_boolean.nordpool_bottom8_hours', 'on') %}
+              22  # Higher temperature during low price hours
+            {% else %}
+              20
+            {% endif %}
+          {% else %}
+            20
+          {% endif %}
+    - service: climate.set_temperature
+      data_template:
+        entity_id: climate.curve_left_setting
+        temperature: >
+          {% if is_state('input_boolean.adjust_heating_curve', 'on') %}
+            {{ states('input_number.heating_curve_temp') | int }}
+          {% else %}
+            30
+          {% endif %}
